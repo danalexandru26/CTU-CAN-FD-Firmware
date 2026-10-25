@@ -1,0 +1,81 @@
+# ---------------------------------------------------------------
+# Vitis Unified (2025.2) workspace .gitignore
+#
+# Tracked components (whitelist below):
+#   CTU_CAN_FD_ILA           platform (Zynq-7020, from CAN_System_wrapper_ILA.xsa)
+#   CTU_CAN_FD_ILA_Firmware  standalone app on ps7_cortexa9_0
+#
+# Keep: app sources, vitis-comp.json, UserConfig.cmake, lscript.ld,
+#       the platform's .xsa, BSP/domain settings (*.yaml, *.cmake),
+#       launch configs, and scripts/.
+# Ignore: everything Vitis regenerates (build/, export/, logs/, BSP
+#       libsrc/lib/include, sdt/ device tree output, workspace _ide/).
+#
+# The Vivado project lives in its own repo:
+#   ../../RTL/CTU_CAN_Ascon  (github.com/danalexandru26/CTU_CAN_Ascon)
+# ---------------------------------------------------------------
+
+# --- Whitelist: ignore everything at the top level except these ---
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/scripts/
+!/CTU_CAN_FD_ILA/
+!/CTU_CAN_FD_ILA_Firmware/
+# To track another component (e.g. AES_SOC), add a line: !/AES_SOC/
+
+# --- Generic build output (any component) ---
+build/
+export/
+logs/
+Debug/
+Release/
+.Xil/
+*.o
+*.d
+*.obj
+*.elf
+*.elf.size
+*.log
+*.jou
+*.lock
+*.bin
+*.pdi
+*.bit
+*.ltx
+*.str
+.vitisWorkspace.json
+_rebuild_ws/
+
+# --- clangd / IntelliSense caches ---
+.cache/
+.clangd
+.compile_commands/
+compile_commands.json
+
+# --- Workspace / component IDE state ---
+.metadata/
+.rigel_lopper/
+**/_ide/*
+# keep the debug/run launch configs, drop the copied bitstream & psinit
+!**/_ide/launch.json
+
+# --- Platform: hw/sdt is regenerated from the .xsa ---
+CTU_CAN_FD_ILA/hw/sdt/
+
+# --- Platform BSPs: keep settings, drop generated library sources/objects ---
+**/bsp/libsrc/
+**/bsp/lib/
+**/bsp/include/
+**/bsp/hw_artifacts/
+**/zynq_fsbl_bsp/libsrc/
+**/zynq_fsbl_bsp/lib/
+**/zynq_fsbl_bsp/include/
+**/zynq_fsbl_bsp/hw_artifacts/
+
+# --- Editor / OS junk ---
+*.swp
+*~
+Thumbs.db
+desktop.ini
