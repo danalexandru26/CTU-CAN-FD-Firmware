@@ -99,6 +99,7 @@ void modeConfig();
 void CAN_FD_modeConfig();
 
 void CAN_Send_Loop();
+void CAN_FD_Send_Loop();
 void CAN_FD_send_frame();
 
 int main()
@@ -125,13 +126,7 @@ int main()
     usleep(1000);
     xil_printf("STATUS: 0x%08x\r\n", rd(STATUS));
     
-    CAN_FD_send_frame();
-    usleep(2000);
-
-    uint32_t s = rd(TX_STATUS) & 0xF;
-    xil_printf("TXT1: 0x%x (%s)\r\n", s, txt_state(s));
-
-
+    CAN_FD_Send_Loop();
 
     // Classic CAN frame: ID 0x123, DLC 8    
     // // Wait for reception (RX_STATUS.RXE = 0 means not empty)
@@ -223,6 +218,22 @@ void CAN_Send_Loop(){
     }
 }
 
+void CAN_FD_Send_Loop(){
+    while(1){
+        // Flush RX Buffer 
+        wr(COMMAND, CMD_RRB);
+        CAN_FD_send_frame();
+        sleep(1);
+
+        // Verify Transmission Status
+        uint32_t s = rd(TX_STATUS) & 0xF;
+        xil_printf("TXT1: 0x%x (%s)\r\n", s, txt_state(s));
+
+        // Verify Controller Status
+        xil_printf("REC/TEC=0x%08x  ERR_CAPT=0x%08x  STATUS=0x%08x\r\n", rd(0x30), rd(0x7C), rd(STATUS));
+    }
+}
+
 void CAN_FD_send_frame(){
     // Write DLC
     wr(TXTB1 + TX_FFW, FFW_DLC(DLC_64) | FFW_FDF | FFW_BRS);
@@ -231,7 +242,7 @@ void CAN_FD_send_frame(){
     wr(TXTB1 + TX_IDW, FRAME_ID << 18);
 
     // Write PAYLOAD_LEN bytes
-    for(int i = 0; i < PAYLOAD_LEN; ++i) {
+    for(int i = 0; i < PAYLOAD_LEN / 4; ++i) {
         uint32_t bd = 4u * i;
         
         wr(TXTB1 + TX_DATA + 4 * i, (bd) | ((bd + 1) << 8) | ((bd + 2) << 16) | ((bd + 3) << 24));
