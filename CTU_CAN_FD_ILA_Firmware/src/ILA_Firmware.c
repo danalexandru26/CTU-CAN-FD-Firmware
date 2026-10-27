@@ -68,6 +68,8 @@ int CANloopback();
 void bitTiming();
 void modeConfig();
 
+void CAN_Send_Loop();
+
 int main()
 {
     init_platform();
@@ -85,6 +87,8 @@ int main()
     // Controller Mode Configuration
     modeConfig();
     
+    // RX/TX in loop for ILA frame capture
+    CAN_Send_Loop();
 
     // Check Node Status
     usleep(1000);
@@ -92,16 +96,7 @@ int main()
 
     // Classic CAN frame: ID 0x123, DLC 8 
    
-   while(1){
-        wr(TXTB1 + FFW,      8);                 // DLC = 8
-        wr(TXTB1 + IDW,      0x123u << 18);
-        wr(TXTB1 + DATA_1_4, 0x44332211);
-        wr(TXTB1 + DATA_5_8, 0x88776655);
-        wr(TX_COMMAND, TXCR | TXB1);
-        sleep(1);
-        xil_printf("TX_STATUS=0x%08x  REC/TEC=0x%08x  ERR_CAPT=0x%08x  STATUS=0x%08x\r\n",
-           rd(TX_STATUS), rd(0x30), rd(0x7C), rd(STATUS));
-   }
+
    
     // Wait for reception (RX_STATUS.RXE = 0 means not empty)
     for (int i = 0; i < 1000 && (rd(RX_STATUS) & 1u); i++){
@@ -153,4 +148,20 @@ void modeConfig(){
     wr(MODE_SETTINGS, ms);
     wr(MODE_SETTINGS, ms | SET_ENA);
     xil_printf("MODE   = 0x%08x (after enable)\r\n", rd(MODE_SETTINGS)); 
+}
+
+void CAN_Send_Loop(){
+    while(1)
+    {
+        wr(TXTB1 + FFW,      8);                 // DLC = 8
+        wr(TXTB1 + IDW,      0x123u << 18);
+        wr(TXTB1 + DATA_1_4, 0x44332211);
+        wr(TXTB1 + DATA_5_8, 0x88776655);
+        wr(TX_COMMAND, TXCR | TXB1);
+        
+        sleep(1);
+        
+        xil_printf("TX_STATUS=0x%08x  REC/TEC=0x%08x  ERR_CAPT=0x%08x  STATUS=0x%08x\r\n",
+        rd(TX_STATUS), rd(0x30), rd(0x7C), rd(STATUS));
+    }
 }
