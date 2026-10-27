@@ -40,6 +40,7 @@
  
 // MODE / SETTINGS bits
 #define MODE_STM        (1u << 2)       // self test: missing ACK is not an error
+#define MODE_FDE        (1u << 4)       // CAN FD enable (on by default)
 #define SET_ILBP        (1u << 21)      // internal loopback: receive own frames 
 #define SET_ENA         (1u << 22)      // enable core                             
  
@@ -52,6 +53,20 @@
 #define IDW             0x04            // base ID in [28:18] 
 #define DATA_1_4        0x10
 #define DATA_5_8        0x14
+
+// Frame format word
+#define FFW_DLC(n)      ((n) & 0xFu)
+#define FFW_IDE         (1u << 6)
+#define FFW_FDF         (1u << 7)       // CAN FD frame          
+#define FFW_LBPF        (1u << 8)       // RX: looped-back frame 
+#define FFW_BRS         (1u << 9)       // bit-rate switch       
+#define FFW_RWCNT(w)    (((w) >> 11) & 0x1Fu)
+
+// CAN FD Frame Payload
+#define FRAME_ID        0x123u
+#define PAYLOAD_LEN     64
+#define DLC_64 15                     // CAN FD DLC 15 -> 64 Bytes
+
  
 #define rd(off)         Xil_In32(CAN_BASE + (off))
 #define wr(off, v)      Xil_Out32(CAN_BASE + (off), (v))
