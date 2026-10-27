@@ -65,6 +65,8 @@ static uint32_t btr_val(uint32_t prop, uint32_t ph1, uint32_t ph2,
 }
 
 int CANloopback();
+void bitTiming();
+void modeConfig();
 
 int main()
 {
@@ -78,18 +80,13 @@ int main()
     }
 
     // Bit Timing Configuration
+    bitTiming();
 
-    wr(BTR, btr_val(8, 7, 4, 10, 3));
-    wr(BTR_FD, btr_val(8, 7, 4, 10, 3));
-    xil_printf("BTR    = 0x%08x (wrote 0x%08x)\r\n", rd(BTR), btr_val(8, 7, 4, 10, 3));
+    // Controller Mode Configuration
+    modeConfig();
     
-    uint32_t ms = rd(MODE_SETTINGS);
-    xil_printf("MODE   = 0x%08x (reset value)\r\n", ms);
-    ms |= MODE_STM | SET_ILBP;
-    wr(MODE_SETTINGS, ms);
-    wr(MODE_SETTINGS, ms | SET_ENA);
-    xil_printf("MODE   = 0x%08x (after enable)\r\n", rd(MODE_SETTINGS));
 
+    // Check Node Status
     usleep(1000);
     xil_printf("STATUS: 0x%08x\r\n", rd(STATUS));
 
@@ -141,4 +138,19 @@ int CANloopback(){
         xil_printf("Wrong ID - check base address / AXI-APB path\r\n");
         return -1;
     }
+}
+
+void bitTiming(){
+    wr(BTR, btr_val(8, 7, 4, 10, 3));
+    wr(BTR_FD, btr_val(8, 7, 4, 10, 3));
+    xil_printf("BTR    = 0x%08x (wrote 0x%08x)\r\n", rd(BTR), btr_val(8, 7, 4, 10, 3));
+}
+
+void modeConfig(){
+    uint32_t ms = rd(MODE_SETTINGS);
+    xil_printf("MODE   = 0x%08x (reset value)\r\n", ms);
+    ms |= MODE_STM | SET_ILBP;
+    wr(MODE_SETTINGS, ms);
+    wr(MODE_SETTINGS, ms | SET_ENA);
+    xil_printf("MODE   = 0x%08x (after enable)\r\n", rd(MODE_SETTINGS)); 
 }
