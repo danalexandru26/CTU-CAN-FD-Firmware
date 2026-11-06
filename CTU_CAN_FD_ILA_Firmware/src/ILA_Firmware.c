@@ -26,24 +26,27 @@
 
 #include "Utility.h"
 #include "CAN.h"
+#include "CAN_FD.h"
 
-void CAN_FD_bitTiming();
-
-void CAN_FD_modeConfig();
-
-void CAN_Send_Loop();
-void CAN_FD_Send_Loop();
-void CAN_FD_send_frame();
+void CAN_Test();
+void CAN_FD_Test();
 
 int main()
 {
     init_platform();
     xil_printf("CTU CAN FD ILA Firmware\r\n");
-    
+
+    CAN_FD_Test();
+  
+    cleanup_platform();
+    return 0;
+}
+
+void CAN_Test(){
+      
     int status = CAN_Loopback();
     if(status == -1){
         xil_printf("CAN Lookback test failure\r\n");
-        return -1;
     }
 
     // Set CAN bit timing
@@ -73,6 +76,43 @@ int main()
         // Verify Controller Status
         xil_printf("REC/TEC=0x%08x  ERR_CAPT=0x%08x  STATUS=0x%08x\r\n", rd(0x30), rd(0x7C), rd(STATUS));    
     }
-    cleanup_platform();
-    return 0;
+}
+
+void CAN_FD_Test(){
+    int status = CAN_Loopback();
+    if(status == -1){
+        xil_printf("CAN Lookback test failure\r\n");
+    }
+
+    // CAN FD nominal bit timing
+    CAN_FD_nominal_timing(8, 7, 4, 10, 3);
+    
+    // CAN FD data bit timing
+    CAN_FD_data_timing(4, 3, 2, 5, 2);
+
+    // CAN FD mode & setting configuration
+    CAN_FD_modeSettings(MODE_STM | SET_ILBP);
+
+    usleep(CAN_SLEEP_PERIOD);
+    xil_printf("STATUS = 0x%08x\r\n", rd(STATUS));
+
+    // Start TX with empty RX buffer
+    wr(COMMAND, CMD_RRB);
+
+    {
+        static const uint8_t p_ff[64]   = { [0 ... 63] = 0xFF }; 
+        
+        CAN_FD_send(1, 1, p_ff, 64); 
+        
+        for(int i = 0; i < 1000 && (rd(RX_STATUS) & 1u); ++i){
+            usleep(CAN_SLEEP_PERIOD / 10);
+        }
+
+        // Verify Transmission Status
+        uint32_t s = rd(TX_STATUS) & 0xF;
+        xil_printf("TXT1: 0x%x (%s)\r\n", s, txt_state(s));
+
+        // Verify Controller Status
+        xil_printf("REC/TEC=0x%08x  ERR_CAPT=0x%08x  STATUS=0x%08x\r\n", rd(0x30), rd(0x7C), rd(STATUS));    
+    }    
 }
