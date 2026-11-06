@@ -27,6 +27,11 @@ const char* txt_state (uint32_t s){
     }
 }
 
+// BTR and BTR FD share same field positions
+uint32_t btr_val(uint32_t prop, uint32_t ph1, uint32_t ph2, uint32_t brp, uint32_t sjw) {
+    return (prop << 0) | (ph1 << 7) | (ph2 << 13) | (brp << 19) | (sjw << 27);
+}
+
 uint32_t RX_Buffer_Size(){
     return (rd(RX_STATUS) >> 4) & 0x7FF;
     

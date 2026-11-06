@@ -5,6 +5,8 @@
 #include "xil_io.h"
 #include "xil_printf.h"
 
+
+#define CAN_SLEEP_PERIOD 0x3E8          // CAN default millisecond sleep period
 #define CAN_BASE        0x43C00000u     // Vivado AXI Address Editor
  
 // Register offsets (from driver/ctucanfd_kregs.h)
@@ -18,8 +20,9 @@
 #define RX_DATA         0x6C
 #define TX_STATUS       0x70
 #define TX_COMMAND      0x74
-#define TXTB1           0x100           // TXT buffer 1 base
- 
+
+#define TXT_BUFFER(n)   (0x100u * n)    // TXT buffer computation. TXT bufffer 1 is 0x100
+
 // COMMAND
 #define CMD_RRB         (1u << 2)       // Flush RX buffer
  
@@ -31,7 +34,11 @@
  
 // TX_COMMAND
 #define TXCR            (1u << 1)       // "set ready" -> send 
+#define TX_B(n)         (1u << (7+(n))) // apply command to the nth TXT buffer. TXT buffer 1 is (1u << 8)
 #define TXB1            (1u << 8)       // apply command to TXT buffer 1 
+#define TXB2            (1u << 9)       // apply command to TXT buffer 2
+#define TXB3            (1u << 10)      // apply command to TXT buffer 3 
+#define TXB4            (1u << 11)      // apply command to TXT buffer 1 
  
 // TXT buffer frame layout (from driver/ctucanfd_kframe.h) */
 #define FFW             0x00            // frame format word: DLC[3:0], IDE, FDF...
@@ -65,6 +72,8 @@
 
 int CAN_Loopback();
 const char* txt_state (uint32_t s);
+uint32_t btr_val(uint32_t prop, uint32_t ph1, uint32_t ph2, uint32_t brp, uint32_t sjw);
+
 
 uint32_t RX_Buffer_Size();
 uint32_t RX_Buffer_Overrun();
