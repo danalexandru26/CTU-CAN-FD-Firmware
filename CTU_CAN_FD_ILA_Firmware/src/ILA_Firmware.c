@@ -28,11 +28,16 @@
 #include "CAN.h"
 #include "CAN_FD.h"
 
-#define CAN_NOMINAL_TIMING_1  0x18508388u  /* BTR:    PROP=8 PH1=7 PH2=4 BRP=10 SJW=3 -> 500 kbit/s */
-#define CAN_NOMINAL_TIMING_2  0x21408407u  /* BTR:    PROP=7 PH1=8 PH2=4 BRP=40 SJW=4 -> 125 kbit/s */
+#define CAN_NOMINAL_TIMING_125   0x21408407u  /* BTR:    PROP=7 PH1=8 PH2=4 BRP=40 SJW=4 -> 125 kbit/s */
+#define CAN_NOMINAL_TIMING_250   0x20A08407u  /* BTR:    PROP=7 PH1=8 PH2=4 BRP=20 SJW=4 -> 250 kbit/s */
+#define CAN_NOMINAL_TIMING_500   0x20508407u  /* BTR:    PROP=7 PH1=8 PH2=4 BRP=10 SJW=4 -> 500 kbit/s */
+#define CAN_NOMINAL_TIMING_1     0x20288407   /* BTR:    PROP=7 PH1=8 PH2=4 BRP=5 SJW=4 -> 1 Mbit/s */
 
-#define CAN_DATA_TIMING_1     0x10284184u  /* BTR_FD: PROP=4 PH1=3 PH2=2 BRP=5 SJW=2 -> 2 Mbit/s */
-#define CAN_DATA_TIMING_2     0x3020C489u  /* BTR_FD: PROP=9 PH1=9 PH2=6 BRP=4 SJW=6 -> 1 Mbit/s */
+#define CAN_DATA_TIMING_1        0x2820A509u  /* BTR_FD: PROP=9 PH1=10 PH2=5 BRP=4 SJW=5 -> 1 Mbit/s */
+#define CAN_DATA_TIMING_2        0x2810A509u  /* BTR_FD: PROP=9 PH1=10 PH2=5 BRP=2 SJW=2 -> 2 Mbit/s */
+#define CAN_DATA_TIMING_4        0x2808A509u  /* BTR_FD: PROP=9 PH1=10 PH2=5 BRP=1 SJW=5 -> 4 Mbit/s */
+#define CAN_DATA_TIMING_5        0x20088407u  /* BTR_FD: PROP=7 PH1=8 PH2=4 BRP=1 SJW=4 -> 5 Mbit/s */
+#define CAN_DATA_TIMING_10       0x10084203u  /* BTR_FD: PROP=3 PH1=4 PH2=2 BRP=1 SJW=2 -> 10 Mbit/s */
 
 
 
@@ -44,7 +49,6 @@ int main()
     init_platform();
     xil_printf("CTU CAN FD ILA Firmware\r\n");
 
-
     {
         static const uint8_t tx_data[32] = {
             0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -54,8 +58,17 @@ int main()
         };
 
         //CAN_FD_Test(CAN_NOMINAL_TIMING_1, CAN_DATA_TIMING_1, 0x123, 1, tx_data, 32);
-        CAN_FD_Test(CAN_NOMINAL_TIMING_2, CAN_DATA_TIMING_2, 0x123, 1, tx_data, sizeof (tx_data));
-
+        //CAN_FD_Test(CAN_NOMINAL_TIMING_125, CAN_DATA_TIMING_2, 0x123, 1, tx_data, sizeof (tx_data));
+        //CAN_FD_Test(CAN_NOMINAL_TIMING_250, CAN_DATA_TIMING_1, 0x123, 1, tx_data, sizeof (tx_data));
+        //CAN_FD_Test(CAN_NOMINAL_TIMING_250, CAN_DATA_TIMING_2, 0x123, 1, tx_data, sizeof (tx_data));
+        //CAN_FD_Test(CAN_NOMINAL_TIMING_500, CAN_DATA_TIMING_1, 0x123, 1, tx_data, sizeof (tx_data));
+        //CAN_FD_Test(CAN_NOMINAL_TIMING_500, CAN_DATA_TIMING_2, 0x123, 1, tx_data, sizeof (tx_data));
+        //CAN_FD_Test(CAN_NOMINAL_TIMING_500, CAN_DATA_TIMING_4, 0x123, 1, tx_data, sizeof (tx_data));
+        //CAN_FD_Test(CAN_NOMINAL_TIMING_500, CAN_DATA_TIMING_5, 0x123, 1, tx_data, sizeof (tx_data));
+        //CAN_FD_Test(CAN_NOMINAL_TIMING_1, CAN_DATA_TIMING_2, 0x123, 1, tx_data, sizeof (tx_data));
+        //CAN_FD_Test(CAN_NOMINAL_TIMING_1, CAN_DATA_TIMING_4, 0x123, 1, tx_data, sizeof (tx_data));
+        //CAN_FD_Test(CAN_NOMINAL_TIMING_1, CAN_DATA_TIMING_5, 0x123, 1, tx_data, sizeof (tx_data));
+        CAN_FD_Test(CAN_NOMINAL_TIMING_1, CAN_DATA_TIMING_10, 0x123, 1, tx_data, sizeof (tx_data));
     }
   
     cleanup_platform();
