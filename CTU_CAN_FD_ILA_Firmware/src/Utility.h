@@ -66,4 +66,7 @@
 int CAN_Loopback();
 const char* txt_state (uint32_t s);
 
+uint32_t RX_Buffer_Size();
+uint32_t RX_Buffer_Overrun();
+
 #endif

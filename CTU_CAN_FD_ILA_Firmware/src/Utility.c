@@ -26,3 +26,12 @@ const char* txt_state (uint32_t s){
         default:  return "?";
     }
 }
+
+uint32_t RX_Buffer_Size(){
+    return (rd(RX_STATUS) >> 4) & 0x7FF;
+    
+}
+
+uint32_t RX_Buffer_Overrun(){
+    return rd(STATUS) & (1u << 1);
+}

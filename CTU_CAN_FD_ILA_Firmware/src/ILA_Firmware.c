@@ -167,10 +167,10 @@ void CAN_FD_Send_Loop(){
         xil_printf("REC/TEC=0x%08x  ERR_CAPT=0x%08x  STATUS=0x%08x\r\n", rd(0x30), rd(0x7C), rd(STATUS));
 
         // Verify RX Buffer Size
-        uint32_t RX_count = (rd(0x68) >> 4) & 0x7FF;
-        xil_printf("RX Buffer Frame Count: %d\r\n", RX_count);
-
-        if(rd(STATUS) & (1u << 1)){
+        xil_printf("RX Buffer Frame Count: %d\r\n", RX_Buffer_Size());
+        
+        // Verify Buffer Overrun flag
+        if(RX_Buffer_Overrun()){
             xil_printf("Buffer Overrun\r\n");
         }
     }
