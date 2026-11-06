@@ -9,8 +9,8 @@
 
 void CAN_FD_init();
 
-void CAN_FD_nominal_timing(uint32_t prop, uint32_t ph1, uint32_t ph2, uint32_t brp, uint32_t sjw);
-void CAN_FD_data_timing(uint32_t prop, uint32_t ph1, uint32_t ph2, uint32_t brp, uint32_t sjw);
+void CAN_FD_nominal_timing(uint32_t btr);
+void CAN_FD_data_timing(uint32_t btr);
 
 void CAN_FD_modeSettings(uint32_t mode_settings);
 

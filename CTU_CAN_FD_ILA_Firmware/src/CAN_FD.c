@@ -4,14 +4,14 @@
 
 void CAN_FD_init();
 
-void CAN_FD_nominal_timing(uint32_t prop, uint32_t ph1, uint32_t ph2, uint32_t brp, uint32_t sjw){
-    wr(BTR, btr_val(prop, ph1, ph2, brp, sjw));
-    xil_printf("BTR = 0x%08x (wrote 0x%08x)\r\n", rd(BTR), btr_val(prop, ph1, ph2, brp, sjw));
+void CAN_FD_nominal_timing(uint32_t btr){
+    wr(BTR, btr);
+    xil_printf("BTR    = 0x%08x (wrote 0x%08x)\r\n", rd(BTR), btr);
 }
 
-void CAN_FD_data_timing(uint32_t prop, uint32_t ph1, uint32_t ph2, uint32_t brp, uint32_t sjw){
-    wr(BTR_FD, btr_val(prop, ph1, ph2, brp, sjw));
-    xil_printf("BTR FD = 0x%08x (wrote 0x%08x)\r\n", rd(BTR_FD), btr_val(prop, ph1, ph2, brp, sjw));
+void CAN_FD_data_timing(uint32_t btr_fd){
+    wr(BTR_FD, btr_fd);
+    xil_printf("BTR_FD = 0x%08x (wrote 0x%08x)\r\n", rd(BTR_FD), btr_fd);
 }
 
 void CAN_FD_modeSettings(uint32_t mode_settings){
