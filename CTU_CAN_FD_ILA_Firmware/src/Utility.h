@@ -74,6 +74,8 @@ int CAN_Loopback();
 const char* txt_state (uint32_t s);
 uint32_t btr_val(uint32_t prop, uint32_t ph1, uint32_t ph2, uint32_t brp, uint32_t sjw);
 
+uint8_t len_to_dlc(uint8_t len);
+
 
 uint32_t RX_Buffer_Size();
 uint32_t RX_Buffer_Overrun();

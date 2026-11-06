@@ -13,7 +13,6 @@ void CAN_modeSettings(uint32_t mode_settings);
 
 void CAN_selfTest();
 
-void CAN_send(uint32_t txt_buffer, uint32_t id, bool ext, const uint8_t* data, uint8_t len);
-void CAN_send_loop();
+void CAN_send(uint32_t txt_buffer, uint32_t id, const uint8_t* data, uint8_t len);
 
 #endif

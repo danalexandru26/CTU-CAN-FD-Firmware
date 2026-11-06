@@ -25,7 +25,7 @@ void CAN_selfTest(){
     CAN_modeSettings(MODE_STM | SET_ILBP);
 }
 
-void CAN_send(uint32_t txt_buffer, uint32_t id, bool ext, const uint8_t* data, uint8_t len){
+void CAN_send(uint32_t txt_buffer, uint32_t id, const uint8_t* data, uint8_t len){
     uint32_t DATA_W_1 = 0x0u;
     uint32_t DATA_W_2 = 0x0u;
     

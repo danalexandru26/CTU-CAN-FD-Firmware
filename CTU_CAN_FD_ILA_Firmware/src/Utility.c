@@ -1,4 +1,5 @@
 #include "Utility.h"
+#include <stdint.h>
 #include <xil_printf.h>
 
 int CAN_Loopback(){
@@ -25,6 +26,17 @@ const char* txt_state (uint32_t s){
         case 0x8: return "empty";
         default:  return "?";
     }
+}
+
+uint8_t len_to_dlc(uint8_t len){
+    if (len <= 8)  return len;
+    if (len <= 12) return 9;
+    if (len <= 16) return 10;
+    if (len <= 20) return 11;
+    if (len <= 24) return 12;
+    if (len <= 32) return 13;
+    if (len <= 48) return 14;
+    return 15;   
 }
 
 // BTR and BTR FD share same field positions

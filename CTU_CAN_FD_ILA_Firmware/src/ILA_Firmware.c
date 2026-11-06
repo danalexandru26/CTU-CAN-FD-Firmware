@@ -60,7 +60,7 @@ int main()
 
     {
         static const uint8_t d8[8] = {0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02, 0x03, 0x04};
-        CAN_send(1, 0x123, false, d8, 8);
+        CAN_send(1, 0x123, d8, 8);
 
         for(int i = 0; i < 1000 && (rd(RX_STATUS) & 1u); ++i){
             usleep(CAN_SLEEP_PERIOD / 10);
