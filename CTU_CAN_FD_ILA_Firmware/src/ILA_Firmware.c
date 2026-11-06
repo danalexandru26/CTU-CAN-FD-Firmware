@@ -54,7 +54,7 @@ int main()
         };
 
         //CAN_FD_Test(CAN_NOMINAL_TIMING_1, CAN_DATA_TIMING_1, 0x123, 1, tx_data, 32);
-        CAN_FD_Test(CAN_NOMINAL_TIMING_2, CAN_DATA_TIMING_2, 0x123, 1, tx_data, 32);
+        CAN_FD_Test(CAN_NOMINAL_TIMING_2, CAN_DATA_TIMING_2, 0x123, 1, tx_data, sizeof (tx_data));
 
     }
   
@@ -133,6 +133,6 @@ void CAN_FD_Test(uint32_t nominal_timing, uint32_t data_timing, const uint32_t i
 
         // Verify Controller Status
         xil_printf("REC/TEC=0x%08x  ERR_CAPT=0x%08x  STATUS=0x%08x\r\n", rd(0x30), rd(0x7C), rd(STATUS));    
-        usleep(CAN_SLEEP_PERIOD);
+        usleep(CAN_SLEEP_PERIOD * 10);
     }    
 }
