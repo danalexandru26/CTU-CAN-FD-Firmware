@@ -35,6 +35,9 @@ set(USER_INCLUDE_DIRECTORIES
 #Example 3: Adding ${MY_ENV}/data/helloworld.c are expanded using project-specific environment settings.
 set(USER_COMPILE_SOURCES
 "CAN_FD.c"
+"CAN.c"
+"ILA_Firmware.c"
+"platform.c"
 )
 
 # -----------------------------------------
