@@ -14,6 +14,9 @@ collect(PROJECT_LIB_DEPS xil)
 collect(PROJECT_LIB_DEPS gcc)
 collect(PROJECT_LIB_DEPS c)
 
+set(USER_LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/lscript.ld")
+set(USER_COMPILE_SOURCES "CAN_FD.c" "CAN.c" "ILA_Firmware.c" "platform.c" "Utility.c")
+
 list (APPEND _sources ${USER_COMPILE_SOURCES})
 foreach (source ${_sources})
     get_filename_component(ext ${source} EXT)

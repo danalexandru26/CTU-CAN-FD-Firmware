@@ -27,7 +27,7 @@
 					"plDevice": "Auto Detect",
 					"psDevice": "Auto Detect"
 				},
-				"resetAPU": false,
+				"resetAPU": true,
 				"bitstreamFile": "${workspaceFolder}\\CTU_CAN_FD_ILA_Firmware\\_ide\\bitstream\\CAN_System_wrapper_ILA.bit",
 				"zynqInitialization": {
 					"isFsbl": true,

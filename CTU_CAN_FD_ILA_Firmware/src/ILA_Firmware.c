@@ -35,9 +35,6 @@ static uint32_t btr_val(uint32_t prop, uint32_t ph1, uint32_t ph2,
     return (prop << 0) | (ph1 << 7) | (ph2 << 13) | (brp << 19) | (sjw << 27);
 }
 
-static const char* txt_state (uint32_t s);
-
-int CANloopback();
 
 void CAN_bitTiming();
 void CAN_FD_bitTiming();
@@ -54,7 +51,7 @@ int main()
     init_platform();
     xil_printf("CTU CAN FD ILA Firmware\r\n");
     
-    int status = CANloopback();
+    int status = CAN_Loopback();
     if(status == -1){
         xil_printf("CAN Lookback test failure\r\n");
         return -1;
@@ -100,17 +97,6 @@ int main()
 
     cleanup_platform();
     return 0;
-}
-
-int CANloopback(){
-    xil_printf("\r\nCTU CAN FD loopback test\r\n");
- 
-    uint32_t id = rd(DEVICE_ID);
-    xil_printf("DEVICE_ID = 0x%08x (expect low half 0xCAFD)\r\n", id);
-    if ((id & 0xFFFF) != 0xCAFD) {
-        xil_printf("Wrong ID - check base address / AXI-APB path\r\n");
-        return -1;
-    }
 }
 
 void CAN_bitTiming(){
@@ -166,9 +152,10 @@ void CAN_Send_Loop(){
 }
 
 void CAN_FD_Send_Loop(){
+    // Flush RX Buffer 
+    wr(COMMAND, CMD_RRB);
+    
     while(1){
-        // Flush RX Buffer 
-        wr(COMMAND, CMD_RRB);
         CAN_FD_send_frame();
         sleep(1);
 
@@ -178,6 +165,14 @@ void CAN_FD_Send_Loop(){
 
         // Verify Controller Status
         xil_printf("REC/TEC=0x%08x  ERR_CAPT=0x%08x  STATUS=0x%08x\r\n", rd(0x30), rd(0x7C), rd(STATUS));
+
+        // Verify RX Buffer Size
+        uint32_t RX_count = (rd(0x68) >> 4) & 0x7FF;
+        xil_printf("RX Buffer Frame Count: %d\r\n", RX_count);
+
+        if(rd(STATUS) & (1u << 1)){
+            xil_printf("Buffer Overrun\r\n");
+        }
     }
 }
 
@@ -198,17 +193,4 @@ void CAN_FD_send_frame(){
     // Ready transmission and collect bytes from TXT Buffer 1
     wr(TX_COMMAND, TXCR | TXB1);
     
-}
-
-static const char* txt_state(uint32_t s){
-    switch (s)
-    {
-        case 0x1: return "ready";
-        case 0x2: return "transmitting";
-        case 0x4: return "sent OK";
-        case 0x6: return "error";
-        case 0x7: return "aborted";
-        case 0x8: return "empty";
-        default:  return "?";
-    }
 }

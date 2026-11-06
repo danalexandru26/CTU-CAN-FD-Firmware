@@ -1,3 +1,10 @@
+#ifndef CAN_UTILITY
+#define CAN_UTILITY
+
+#include <stdint.h>
+#include "xil_io.h"
+#include "xil_printf.h"
+
 #define CAN_BASE        0x43C00000u     // Vivado AXI Address Editor
  
 // Register offsets (from driver/ctucanfd_kregs.h)
@@ -52,3 +59,11 @@
  
 #define rd(off)         Xil_In32(CAN_BASE + (off))
 #define wr(off, v)      Xil_Out32(CAN_BASE + (off), (v))
+
+
+// CAN Utility Functions
+
+int CAN_Loopback();
+const char* txt_state (uint32_t s);
+
+#endif
