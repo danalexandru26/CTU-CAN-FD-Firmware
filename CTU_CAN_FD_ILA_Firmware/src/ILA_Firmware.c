@@ -19,120 +19,63 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <memory.h>
+#include <stdbool.h>
+
 #include "platform.h"
 #include "xil_io.h"
 #include "xil_printf.h"
 #include "sleep.h"
 
-#include "Utility.h"
-#include "CAN.h"
-#include "CAN_FD.h"
+/* CTU CAN DRIVER */
+#include "ctu_can.h"
 
-void CAN_Test();
-void CAN_FD_Test(uint32_t nominal_timing, uint32_t data_timing, const uint32_t id, const uint32_t txt_buffer, const  uint8_t* data, uint32_t len);
+const uint32_t CTU_CAN_1_BASE = 0x43C00000u;
+const char*    identifier     = "CTU CAN NODE 1";
+
+const uint8_t payload_len = 8u;
+const uint8_t txt_buffer  = 1u;
+
+void cleanup_memory_allocations(void** mem);
 
 int main()
 {
     init_platform();
     xil_printf("CTU CAN FD ILA Firmware\r\n");
+    
+    ctu_can_bittiming_t ctu_can_nominal = CTU_CAN_BT_250K;
+    ctu_can_bittiming_t ctu_can_data = CTU_CAN_BT_FD_1M;
+    uint32_t opt = CTU_CAN_OPT_SELF_TEST | CTU_CAN_OPT_LOOPBACK;
+    ctu_can_config_t ctu_can_config = {.nominal = ctu_can_nominal, .data = ctu_can_data, .opts = opt};
+    
+    ctu_can_t ctu_can;
+    ctu_can_init(&ctu_can, identifier, CTU_CAN_1_BASE, &ctu_can_config);
 
-    {
-        static const uint8_t tx_data[32] = {
-            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-            0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-            0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F
-        };
-
-        //CAN_FD_Test(CAN_NOMINAL_TIMING_1, CAN_DATA_TIMING_1, 0x123, 1, tx_data, 32);
-        //CAN_FD_Test(CAN_NOMINAL_TIMING_125, CAN_DATA_TIMING_2, 0x123, 1, tx_data, sizeof (tx_data));
-        //CAN_FD_Test(CAN_NOMINAL_TIMING_250, CAN_DATA_TIMING_1, 0x123, 1, tx_data, sizeof (tx_data));
-        //CAN_FD_Test(CAN_NOMINAL_TIMING_250, CAN_DATA_TIMING_2, 0x123, 1, tx_data, sizeof (tx_data));
-        //CAN_FD_Test(CAN_NOMINAL_TIMING_500, CAN_DATA_TIMING_1, 0x123, 1, tx_data, sizeof (tx_data));
-        //CAN_FD_Test(CAN_NOMINAL_TIMING_500, CAN_DATA_TIMING_2, 0x123, 1, tx_data, sizeof (tx_data));
-        //CAN_FD_Test(CAN_NOMINAL_TIMING_500, CAN_DATA_TIMING_4, 0x123, 1, tx_data, sizeof (tx_data));
-        //CAN_FD_Test(CAN_NOMINAL_TIMING_500, CAN_DATA_TIMING_5, 0x123, 1, tx_data, sizeof (tx_data));
-        //CAN_FD_Test(CAN_NOMINAL_TIMING_1, CAN_DATA_TIMING_2, 0x123, 1, tx_data, sizeof (tx_data));
-        //CAN_FD_Test(CAN_NOMINAL_TIMING_1, CAN_DATA_TIMING_4, 0x123, 1, tx_data, sizeof (tx_data));
-        //CAN_FD_Test(CAN_NOMINAL_TIMING_1, CAN_DATA_TIMING_5, 0x123, 1, tx_data, sizeof (tx_data));
-        CAN_FD_Test(CAN_NOMINAL_TIMING_1, CAN_DATA_TIMING_10, 0x123, 1, tx_data, sizeof (tx_data));
+    uint8_t flag = 0x0u;
+    uint8_t payload[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    can_frame_t frame = {.id = 0x123u, .len = 8u, .flags = flag};
+    
+    /* Min between clasical CAN payload length and current payload length */
+    for(uint32_t byte = 0; byte < 8; ++byte){
+        frame.data[byte] = payload[byte];
     }
-  
+
+
+    while(true){
+        ctu_can_send_txt(&ctu_can, 1u, &frame);
+        usleep(1000);
+
+        uint32_t tx_status = reg_read(&ctu_can, TX_STATUS) >> (4 * (txt_buffer - 1)) & 0xF;
+        uint32_t rx_status = reg_read(&ctu_can, RX_STATUS);
+        
+        bool empty = rx_status & 1u;
+        uint32_t frames = (rx_status >> 4) & 0x7FF;
+
+        xil_printf("Status: 0x%x\r\n RX Empty: %d \t RX Frames: 0x%x\r\n", tx_status, empty, frames);
+        usleep(10000);
+    }
+
+    
     cleanup_platform();
     return 0;
-}
-
-void CAN_Test(){
-      
-    int status = CAN_Loopback();
-    if(status == -1){
-        xil_printf("CAN Lookback test failure\r\n");
-    }
-
-    // Set CAN bit timing
-    CAN_bitTiming(8, 7, 4, 10, 3);
-
-    // CAN mode & settings configuration
-    CAN_modeSettings(MODE_STM | SET_ILBP);
-
-    usleep(CAN_SLEEP_PERIOD);
-    xil_printf("STATUS = 0x%08x\r\n", rd(STATUS));
-
-    // Start TX with empty RX buffer
-    wr(COMMAND, CMD_RRB);
-
-    {
-        static const uint8_t d8[8] = {0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02, 0x03, 0x04};
-        CAN_send(1, 0x123, d8, 8);
-
-        for(int i = 0; i < 1000 && (rd(RX_STATUS) & 1u); ++i){
-            usleep(CAN_SLEEP_PERIOD / 10);
-        }
-
-        // Verify Transmission Status
-        uint32_t s = rd(TX_STATUS) & 0xF;
-        xil_printf("TXT1: 0x%x (%s)\r\n", s, txt_state(s));
-
-        // Verify Controller Status
-        xil_printf("REC/TEC=0x%08x  ERR_CAPT=0x%08x  STATUS=0x%08x\r\n", rd(0x30), rd(0x7C), rd(STATUS));    
-    }
-}
-
-void CAN_FD_Test(uint32_t nominal_timing, uint32_t data_timing, const uint32_t id, const uint32_t txt_buffer, const  uint8_t* data, uint32_t len){
-    int status = CAN_Loopback();
-    if(status == -1){
-        xil_printf("CAN Lookback test failure\r\n");
-    }
-
-    // CAN FD nominal bit timing
-    CAN_FD_nominal_timing(nominal_timing);
-    
-    // CAN FD data bit timing
-    CAN_FD_data_timing(data_timing);
-
-    // CAN FD mode & setting configuration
-    CAN_FD_modeSettings(MODE_STM | SET_ILBP);
-
-    usleep(CAN_SLEEP_PERIOD);
-    xil_printf("STATUS = 0x%08x\r\n", rd(STATUS));
-
-    // Start TX with empty RX buffer
-    wr(COMMAND, CMD_RRB);
-
-    while(1)
-    {
-        CAN_FD_send(txt_buffer, id, data, len); 
-        
-        for(int i = 0; i < 1000 && (rd(RX_STATUS) & 1u); ++i){
-            usleep(CAN_SLEEP_PERIOD / 10);
-        }
-
-        // Verify Transmission Status
-        uint32_t s = rd(TX_STATUS) & 0xF;
-        xil_printf("TXT1: 0x%x (%s)\r\n", s, txt_state(s));
-
-        // Verify Controller Status
-        xil_printf("REC/TEC=0x%08x  ERR_CAPT=0x%08x  STATUS=0x%08x\r\n", rd(0x30), rd(0x7C), rd(STATUS));    
-        usleep(CAN_SLEEP_PERIOD * 10);
-    }    
 }
