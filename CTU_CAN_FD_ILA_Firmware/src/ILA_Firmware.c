@@ -33,7 +33,7 @@
 const uint32_t CTU_CAN_1_BASE = 0x43C00000u;
 const char*    identifier     = "CTU CAN NODE 1";
 
-const uint8_t payload_len = 8u;
+const uint8_t payload_len = 32u;
 const uint8_t txt_buffer  = 1u;
 
 void cleanup_memory_allocations(void** mem);
@@ -43,21 +43,20 @@ int main()
     init_platform();
     xil_printf("CTU CAN FD ILA Firmware\r\n");
     
-    ctu_can_bittiming_t ctu_can_nominal = CTU_CAN_BT_250K;
-    ctu_can_bittiming_t ctu_can_data = CTU_CAN_BT_FD_1M;
-    uint32_t opt = CTU_CAN_OPT_SELF_TEST | CTU_CAN_OPT_LOOPBACK;
+    ctu_can_bittiming_t ctu_can_nominal = CTU_CAN_BT_1M;
+    ctu_can_bittiming_t ctu_can_data = CTU_CAN_BT_FD_5M;
+    uint32_t opt = CTU_CAN_OPT_FD | CTU_CAN_OPT_SELF_TEST | CTU_CAN_OPT_LOOPBACK;
     ctu_can_config_t ctu_can_config = {.nominal = ctu_can_nominal, .data = ctu_can_data, .opts = opt};
     
     ctu_can_t ctu_can;
     ctu_can_init(&ctu_can, identifier, CTU_CAN_1_BASE, &ctu_can_config);
 
     uint8_t flag = 0x0u;
-    uint8_t payload[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    can_frame_t frame = {.id = 0x123u, .len = 8u, .flags = flag};
+    can_frame_t frame = {.id = 0x123u, .len = payload_len, .flags = flag};
     
     /* Min between clasical CAN payload length and current payload length */
-    for(uint32_t byte = 0; byte < 8; ++byte){
-        frame.data[byte] = payload[byte];
+    for(uint32_t byte = 0; byte < 32; ++byte){
+        frame.data[byte] = 0xFF;
     }
 
 
@@ -74,7 +73,6 @@ int main()
         xil_printf("Status: 0x%x\r\n RX Empty: %d \t RX Frames: 0x%x\r\n", tx_status, empty, frames);
         usleep(10000);
     }
-
     
     cleanup_platform();
     return 0;

@@ -1,7 +1,7 @@
 {
   "name": "CTU_CAN_FD_ILA_Firmware",
   "type": "HOST",
-  "platform": "CTU_CAN_FD_ILA_131027",
+  "platform": "CTU_CAN_FD_LOOPBACK_2TX_ILA131072",
   "domain": "standalone_ps7_cortexa9_0",
   "cpuInstance": "ps7_cortexa9_0",
   "cpuType": "cortex-a9",

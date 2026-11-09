@@ -28,12 +28,12 @@
 					"psDevice": "Auto Detect"
 				},
 				"resetAPU": true,
-				"bitstreamFile": "D:\\FPGA_Dev\\Digilent\\Zynq-7020\\Vitis_Workspaces\\CTU_CAN_FD_ILA_131027\\export\\CTU_CAN_FD_ILA_131027\\hw\\sdt\\CAN_System_wrapper_ILA_131027.bit",
+				"bitstreamFile": "D:\\FPGA_Dev\\Digilent\\Zynq-7020\\Vitis_Workspaces\\CTU_CAN_FD_LOOPBACK_2TX_ILA131072\\export\\CTU_CAN_FD_LOOPBACK_2TX_ILA131072\\hw\\sdt\\CAN_System_wrapper.bit",
 				"zynqInitialization": {
 					"isFsbl": true,
 					"usingFSBL": {
 						"initWithFSBL": true,
-						"fsblFile": "D:\\FPGA_Dev\\Digilent\\Zynq-7020\\Vitis_Workspaces\\CTU_CAN_FD_ILA_131027\\export\\CTU_CAN_FD_ILA_131027\\sw\\boot\\fsbl.elf",
+						"fsblFile": "D:\\FPGA_Dev\\Digilent\\Zynq-7020\\Vitis_Workspaces\\CTU_CAN_FD_LOOPBACK_2TX_ILA131072\\export\\CTU_CAN_FD_LOOPBACK_2TX_ILA131072\\sw\\boot\\fsbl.elf",
 						"fsblExitSymbol": "FsblHandoffJtagExit"
 					},
 					"usingPs7Init": {
