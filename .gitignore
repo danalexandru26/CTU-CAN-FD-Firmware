@@ -22,8 +22,9 @@
 !/README.md
 !/scripts/
 !/CTU_CAN_FD_ILA/
-!/CTU_CAN_FD_ILA_Firmware/
 !/CTU_CAN_FD_Double_Node_Wrapper/
+!/CTU_CAN_FD_ILA_Firmware/
+!/CTU_CAN_FD_DUAL_NODE_ILA/
 !/driver/
 # To track another component (e.g. AES_SOC), add a line: !/AES_SOC/
 

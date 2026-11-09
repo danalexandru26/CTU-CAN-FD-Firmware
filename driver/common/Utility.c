@@ -28,22 +28,6 @@ const char* txt_state (uint32_t s){
     }
 }
 
-uint8_t len_to_dlc(uint8_t len){
-    if (len <= 8)  return len;
-    if (len <= 12) return 9;
-    if (len <= 16) return 10;
-    if (len <= 20) return 11;
-    if (len <= 24) return 12;
-    if (len <= 32) return 13;
-    if (len <= 48) return 14;
-    return 15;   
-}
-
-// BTR and BTR FD share same field positions
-uint32_t btr_val(uint32_t prop, uint32_t ph1, uint32_t ph2, uint32_t brp, uint32_t sjw) {
-    return (prop << 0) | (ph1 << 7) | (ph2 << 13) | (brp << 19) | (sjw << 27);
-}
-
 uint32_t RX_Buffer_Size(){
     return (rd(RX_STATUS) >> 4) & 0x7FF;
     
@@ -51,4 +35,13 @@ uint32_t RX_Buffer_Size(){
 
 uint32_t RX_Buffer_Overrun(){
     return rd(STATUS) & (1u << 1);
+}
+
+void rd(uint32_t base, uint32_t offset){
+    uint32_t val = Xil_In32(base + offset);
+    xil_printf("rd(0x%08x) = 0x%08x\r\n", base + offset, val);
+}
+
+void wr(uint32_t base, uint32_t offset, uint32_t val){
+    Xil_Out32(base + offset, val);
 }

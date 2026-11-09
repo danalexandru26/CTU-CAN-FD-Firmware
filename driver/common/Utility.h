@@ -6,7 +6,7 @@
 #include "xil_printf.h"
 
 #define CAN_SLEEP_PERIOD 0x3E8          // CAN default millisecond sleep period
-#define CAN_BASE        0x43C00000u     // Vivado AXI Address Editor
+#define CAN_BASE         0x43C00000u     // Vivado AXI Address Editor
  
 /* Register offsets (from driver/ctucanfd_kregs.h) */
 #define COMMAND         0x0C
@@ -61,22 +61,6 @@
 #define FRAME_ID        0x123u
 #define PAYLOAD_LEN     64
 #define DLC_64          15             // CAN FD DLC 15 -> 64 Bytes
- 
-#define rd(off)         Xil_In32(CAN_BASE + (off))
-#define wr(off, v)      Xil_Out32(CAN_BASE + (off), (v))
-
-
-/* CAN Timing Values */
-#define CAN_NOMINAL_TIMING_125   0x21408407u  /* BTR:    PROP=7 PH1=8 PH2=4 BRP=40 SJW=4 -> 125 kbit/s */
-#define CAN_NOMINAL_TIMING_250   0x20A08407u  /* BTR:    PROP=7 PH1=8 PH2=4 BRP=20 SJW=4 -> 250 kbit/s */
-#define CAN_NOMINAL_TIMING_500   0x20508407u  /* BTR:    PROP=7 PH1=8 PH2=4 BRP=10 SJW=4 -> 500 kbit/s */
-#define CAN_NOMINAL_TIMING_1     0x20288407   /* BTR:    PROP=7 PH1=8 PH2=4 BRP=5 SJW=4 -> 1 Mbit/s */
-
-#define CAN_DATA_TIMING_1        0x2820A509u  /* BTR_FD: PROP=9 PH1=10 PH2=5 BRP=4 SJW=5 -> 1 Mbit/s */
-#define CAN_DATA_TIMING_2        0x2810A509u  /* BTR_FD: PROP=9 PH1=10 PH2=5 BRP=2 SJW=2 -> 2 Mbit/s */
-#define CAN_DATA_TIMING_4        0x2808A509u  /* BTR_FD: PROP=9 PH1=10 PH2=5 BRP=1 SJW=5 -> 4 Mbit/s */
-#define CAN_DATA_TIMING_5        0x20088407u  /* BTR_FD: PROP=7 PH1=8 PH2=4 BRP=1 SJW=4 -> 5 Mbit/s */
-#define CAN_DATA_TIMING_10       0x10084203u  /* BTR_FD: PROP=3 PH1=4 PH2=2 BRP=1 SJW=2 -> 10 Mbit/s */
 
 
 /* CAN Utility Functions */
@@ -88,5 +72,8 @@ uint8_t len_to_dlc(uint8_t len);
 
 uint32_t RX_Buffer_Size();
 uint32_t RX_Buffer_Overrun();
+
+void rd(uint32_t base, uint32_t offset);
+void wr(uint32_t base, uint32_t offset, uint32_t val);
 
 #endif
