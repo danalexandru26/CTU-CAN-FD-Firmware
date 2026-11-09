@@ -5,11 +5,10 @@
 #include "xil_io.h"
 #include "xil_printf.h"
 
-
 #define CAN_SLEEP_PERIOD 0x3E8          // CAN default millisecond sleep period
 #define CAN_BASE        0x43C00000u     // Vivado AXI Address Editor
  
-// Register offsets (from driver/ctucanfd_kregs.h)
+/* Register offsets (from driver/ctucanfd_kregs.h) */
 #define COMMAND         0x0C
 #define DEVICE_ID       0x00
 #define MODE_SETTINGS   0x04            // MODE [15:0] + SETTINGS [31:16]
@@ -23,16 +22,16 @@
 
 #define TXT_BUFFER(n)   (0x100u * n)    // TXT buffer computation. TXT bufffer 1 is 0x100
 
-// COMMAND
+/* COMMAND */
 #define CMD_RRB         (1u << 2)       // Flush RX buffer
  
-// MODE / SETTINGS bits
+/* MODE / SETTINGS bits */
 #define MODE_STM        (1u << 2)       // self test: missing ACK is not an error
 #define MODE_FDE        (1u << 4)       // CAN FD enable (on by default)
 #define SET_ILBP        (1u << 21)      // internal loopback: receive own frames 
 #define SET_ENA         (1u << 22)      // enable core                             
  
-// TX_COMMAND
+/* TX_COMMAND */
 #define TXCR            (1u << 1)       // "set ready" -> send 
 #define TX_B(n)         (1u << (7+(n))) // apply command to the nth TXT buffer. TXT buffer 1 is (1u << 8)
 #define TXB1            (1u << 8)       // apply command to TXT buffer 1 
@@ -40,13 +39,13 @@
 #define TXB3            (1u << 10)      // apply command to TXT buffer 3 
 #define TXB4            (1u << 11)      // apply command to TXT buffer 1 
  
-// TXT buffer frame layout (from driver/ctucanfd_kframe.h) */
+/* TXT buffer frame layout (from driver/ctucanfd_kframe.h) */
 #define FFW             0x00            // frame format word: DLC[3:0], IDE, FDF...
 #define IDW             0x04            // base ID in [28:18] 
 #define DATA_1_4        0x10
 #define DATA_5_8        0x14
 
-// Frame format word
+/* Frame format word */
 #define FFW_DLC(n)      ((n) & 0xFu)
 #define FFW_IDE         (1u << 6)
 #define FFW_FDF         (1u << 7)       // CAN FD frame          
@@ -54,7 +53,7 @@
 #define FFW_BRS         (1u << 9)       // bit-rate switch       
 #define FFW_RWCNT(w)    (((w) >> 11) & 0x1Fu)
 
-// CAN FD Frame Payload
+/* CAN FD Frame Payload */
 #define TX_FFW          0x00
 #define TX_IDW          0x04
 #define TX_DATA         0x10
@@ -62,20 +61,30 @@
 #define FRAME_ID        0x123u
 #define PAYLOAD_LEN     64
 #define DLC_64          15             // CAN FD DLC 15 -> 64 Bytes
-
  
 #define rd(off)         Xil_In32(CAN_BASE + (off))
 #define wr(off, v)      Xil_Out32(CAN_BASE + (off), (v))
 
 
-// CAN Utility Functions
+/* CAN Timing Values */
+#define CAN_NOMINAL_TIMING_125   0x21408407u  /* BTR:    PROP=7 PH1=8 PH2=4 BRP=40 SJW=4 -> 125 kbit/s */
+#define CAN_NOMINAL_TIMING_250   0x20A08407u  /* BTR:    PROP=7 PH1=8 PH2=4 BRP=20 SJW=4 -> 250 kbit/s */
+#define CAN_NOMINAL_TIMING_500   0x20508407u  /* BTR:    PROP=7 PH1=8 PH2=4 BRP=10 SJW=4 -> 500 kbit/s */
+#define CAN_NOMINAL_TIMING_1     0x20288407   /* BTR:    PROP=7 PH1=8 PH2=4 BRP=5 SJW=4 -> 1 Mbit/s */
 
+#define CAN_DATA_TIMING_1        0x2820A509u  /* BTR_FD: PROP=9 PH1=10 PH2=5 BRP=4 SJW=5 -> 1 Mbit/s */
+#define CAN_DATA_TIMING_2        0x2810A509u  /* BTR_FD: PROP=9 PH1=10 PH2=5 BRP=2 SJW=2 -> 2 Mbit/s */
+#define CAN_DATA_TIMING_4        0x2808A509u  /* BTR_FD: PROP=9 PH1=10 PH2=5 BRP=1 SJW=5 -> 4 Mbit/s */
+#define CAN_DATA_TIMING_5        0x20088407u  /* BTR_FD: PROP=7 PH1=8 PH2=4 BRP=1 SJW=4 -> 5 Mbit/s */
+#define CAN_DATA_TIMING_10       0x10084203u  /* BTR_FD: PROP=3 PH1=4 PH2=2 BRP=1 SJW=2 -> 10 Mbit/s */
+
+
+/* CAN Utility Functions */
 int CAN_Loopback();
 const char* txt_state (uint32_t s);
 uint32_t btr_val(uint32_t prop, uint32_t ph1, uint32_t ph2, uint32_t brp, uint32_t sjw);
 
 uint8_t len_to_dlc(uint8_t len);
-
 
 uint32_t RX_Buffer_Size();
 uint32_t RX_Buffer_Overrun();
