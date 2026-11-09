@@ -1,0 +1,34 @@
+/ {
+	amba_pl: amba_pl {
+		ranges;
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		firmware-name = "CAN_System_wrapper.bit.bin";
+		clocking0: clocking0 {
+			compatible = "xlnx,fclk";
+			assigned-clocks = <&clkc 15>;
+			assigned-clock-rates = <100000000>;
+			#clock-cells = <0>;
+			clock-output-names = "fabric_clk";
+			clocks = <&clkc 15>;
+		};
+		ctu_can_fd_top_apb_w_0: ctu_can_fd_top_apb_wrapper@43c00000 {
+			compatible = "xlnx,ctu-can-fd-top-apb-wrapper-1.0";
+			interrupts = < 0 29 4 >;
+			xlnx,g-txt-buf-count = <2>;
+			interrupt-parent = <&intc>;
+			xlnx,ip-name = "ctu_can_fd_top_apb_wrapper";
+			reg = <0x43c00000 0x10000>;
+			xlnx,g-rx-buf-size = <128>;
+			clocks = <&clkc 15>;
+			xlnx,g-test-regs-en;
+			xlnx,g-active-ts-bits = <63>;
+			xlnx,edk-iptype = "PERIPHERAL";
+			status = "okay";
+			clock-names = "aclk";
+			interrupt-names = "irq";
+			xlnx,name = "ctu_can_fd_top_apb_w_0";
+		};
+	};
+};

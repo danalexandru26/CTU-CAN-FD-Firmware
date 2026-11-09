@@ -25,6 +25,7 @@
 !/CTU_CAN_FD_Double_Node_Wrapper/
 !/CTU_CAN_FD_ILA_Firmware/
 !/CTU_CAN_FD_DUAL_NODE_ILA/
+!/CTU_CAN_FD_LOOPBACK_2TX_ILA131072/
 !/driver/
 # To track another component (e.g. AES_SOC), add a line: !/AES_SOC/
 
