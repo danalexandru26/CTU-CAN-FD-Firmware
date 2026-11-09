@@ -15,7 +15,15 @@ collect(PROJECT_LIB_DEPS gcc)
 collect(PROJECT_LIB_DEPS c)
 
 set(USER_LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/lscript.ld")
-set(USER_COMPILE_SOURCES "CAN_FD.c" "CAN.c" "ILA_Firmware.c" "platform.c" "Utility.c")
+set(USER_COMPILE_SOURCES "ILA_Firmware.c" "platform.c")
+
+# --- shared CTU CAN FD driver ---
+set(DRV ${CMAKE_CURRENT_SOURCE_DIR}/../../driver)
+include(${DRV}/ctu_can_fd/ctu_can_fd.cmake)
+list(APPEND USER_COMPILE_SOURCES ${CTU_CAN_FD_SOURCES})
+list(REMOVE_DUPLICATES USER_COMPILE_SOURCES)
+list(APPEND USER_INCLUDE_DIRECTORIES ${CTU_CAN_FD_INCLUDE_DIRS})
+# --------------------------------
 
 list (APPEND _sources ${USER_COMPILE_SOURCES})
 foreach (source ${_sources})
