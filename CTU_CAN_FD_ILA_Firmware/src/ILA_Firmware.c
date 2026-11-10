@@ -36,8 +36,6 @@ const char*    identifier     = "CTU CAN NODE 1";
 const uint8_t payload_len = 32u;
 const uint8_t txt_buffer  = 1u;
 
-void cleanup_memory_allocations(void** mem);
-
 int main()
 {
     init_platform();
