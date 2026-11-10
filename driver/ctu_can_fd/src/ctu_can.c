@@ -1,4 +1,5 @@
 #include "../include/ctu_can.h"
+#include <stdint.h>
 
 const ctu_can_bittiming_t CTU_CAN_BT_125K  = { .brp = 40, .prop = 7, .ph1 = 8, .ph2 = 4, .sjw = 4 };
 const ctu_can_bittiming_t CTU_CAN_BT_250K  = { .brp = 20, .prop = 7, .ph1 = 8, .ph2 = 4, .sjw = 4 };
@@ -132,6 +133,63 @@ int ctu_can_send_txt(ctu_can_t* dev, const uint8_t txt_buffer, const can_frame_t
     reg_write(dev, TX_COMMAND, TXCR | (1u << (7 + txt_buffer))); // Apply Ready command to selected TXT buffer)
 
     return 0;
+}
+
+int ctu_can_recv(ctu_can_t *dev, can_frame_t *frame){
+    if(!dev){
+        return -1;
+    }
+
+    if(reg_read(dev, RX_STATUS) & 1u) {
+        return -1;
+    }
+
+    /* Read Frame Format Word from Queue*/
+    uint32_t ffw = reg_read(dev, RX_DATA);
+    uint32_t rwcnt = (ffw >> 11) & 0x1F; // Words left after this one
+    uint8_t dlc = ffw & 0xF;
+
+    /* Set frame flags*/
+    frame->flags = 0;
+    if(ffw & FFW_IDE) frame->flags |= CAN_FLAG_EXT;
+    if(ffw & FFW_FDF) frame->flags |= CAN_FLAG_FD;
+    if(ffw & FFW_BRS) frame-> flags |= CAN_FLAG_BRS;
+
+    if (ffw & FFW_FDF) {
+    /* CAN FD: */
+    frame->len = ctu_can_dlc_to_len(dlc);
+    } else {
+        /* Classic CAN length*/
+        if (dlc > 8)
+            frame->len = 8;
+        else
+            frame->len = dlc;
+    }
+    
+    /* Read frame identifier from queue */
+    uint32_t idw = reg_read(dev, RX_DATA);
+    if(ffw & FFW_IDE) {
+        frame->id = idw & 0x1FFFFFFF;
+    }
+    else{
+        frame->id = (idw >> 18) & 0x7FF;
+    }
+
+    /* CTU CAN Controller Timestamp*/
+    uint32_t timestamp_low = reg_read(dev, RX_DATA);
+    uint32_t timestamp_high = reg_read(dev, RX_DATA);
+
+    frame->timestamp = ((uint64_t)timestamp_high << 32) | timestamp_low;
+    
+    /* Read frame data fields*/
+    for(uint32_t w = 0; w < rwcnt - 3; ++w){
+        uint32_t word = reg_read(dev, RX_DATA);
+        for(uint8_t b = 0; b < 4; ++b){
+            frame->data[w * 4 + b] = (word >> (b * 8)) & 0xFF;
+        }
+    }
+
+    return 1;
 }
 
 uint32_t ctu_can_btr_pack(const ctu_can_bittiming_t *bt){

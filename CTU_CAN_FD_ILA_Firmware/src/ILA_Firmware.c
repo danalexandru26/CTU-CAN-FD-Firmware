@@ -51,28 +51,58 @@ int main()
     ctu_can_t ctu_can;
     ctu_can_init(&ctu_can, identifier, CTU_CAN_1_BASE, &ctu_can_config);
 
-    uint8_t flag = 0x0u;
+    uint8_t flag = CAN_FLAG_FD | CAN_FLAG_BRS;
     can_frame_t frame = {.id = 0x123u, .len = payload_len, .flags = flag};
     
     /* Min between clasical CAN payload length and current payload length */
     for(uint32_t byte = 0; byte < 32; ++byte){
-        frame.data[byte] = 0xFF;
+        frame.data[byte] = 0x1F;
     }
+    
+    ctu_can_send_txt(&ctu_can, 1u, &frame);
+    usleep(1000);
 
+    uint32_t tx_status = reg_read(&ctu_can, TX_STATUS) >> (4 * (txt_buffer-1)) & 0xF;
+    xil_printf("Status: 0x%x %s\r\n", tx_status, txt_state(tx_status));
 
-    while(true){
-        ctu_can_send_txt(&ctu_can, 1u, &frame);
-        usleep(1000);
+    can_frame_t rcv_frame;
+    int rcv_result = ctu_can_recv(&ctu_can, &rcv_frame);
 
-        uint32_t tx_status = reg_read(&ctu_can, TX_STATUS) >> (4 * (txt_buffer - 1)) & 0xF;
-        uint32_t rx_status = reg_read(&ctu_can, RX_STATUS);
+    if(rcv_result == 1){
+        xil_printf("Frame successfully received in feedback self-test mode\r\n");
+
+        /* Print frame */
+        xil_printf("Sent ID: 0x%x\tReceived ID: 0x%x\r\n", frame.id, rcv_frame.id);
         
-        bool empty = rx_status & 1u;
-        uint32_t frames = (rx_status >> 4) & 0x7FF;
+        xil_printf("Sent Length: 0x%x\tReceived Length: 0x%x\r\n", frame.len, rcv_frame.len);
 
-        xil_printf("Status: 0x%x\r\n RX Empty: %d \t RX Frames: 0x%x\r\n", tx_status, empty, frames);
-        usleep(10000);
+        xil_printf("Sent Flags: 0x%x\tReceived Flags: 0x%x\r\n", frame.flags, rcv_frame.flags);
+
+        xil_printf("Sent Timestamp: 0x%x\tReceived Timestamp: 0x%x\r\n", frame.timestamp, rcv_frame.timestamp);
+
+        /* Print Frame Data*/
+        for(uint32_t idx = 0; idx < rcv_frame.len; ++idx){
+            xil_printf("Byte: %d\tValue: 0x%x\r\n", idx, rcv_frame.data[idx]);
+        }
+        
     }
+    else{
+        xil_printf("Error receiving frame\r\n");
+    }
+
+    // while(true){
+    //     ctu_can_send_txt(&ctu_can, 1u, &frame);
+    //     usleep(1000);
+
+    //     uint32_t tx_status = reg_read(&ctu_can, TX_STATUS) >> (4 * (txt_buffer - 1)) & 0xF;
+    //     uint32_t rx_status = reg_read(&ctu_can, RX_STATUS);
+        
+    //     bool empty = rx_status & 1u;
+    //     uint32_t frames = (rx_status >> 4) & 0x7FF;
+
+    //     xil_printf("Status: 0x%x\r\n RX Empty: %d \t RX Frames: 0x%x\r\n", tx_status, empty, frames);
+    //     usleep(10000);
+    // }
     
     cleanup_platform();
     return 0;

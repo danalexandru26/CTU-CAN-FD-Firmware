@@ -169,6 +169,8 @@ int ctu_can_send(ctu_can_t* dev, const can_frame_t* frame);
 /* Transmit a frame. Use a specific TXT buffer. */
 int ctu_can_send_txt(ctu_can_t* dev, const uint8_t txt_buffer, const can_frame_t* frame);
 
+/* Receive a frame. */
+int ctu_can_recv(ctu_can_t* dev, can_frame_t* frame);
 
 /* Helper Functions */
 uint32_t ctu_can_btr_pack(const ctu_can_bittiming_t *bt);
