@@ -1,6 +1,7 @@
 @echo off
-rem Rebuild the Vitis platform + app from git into a fresh workspace.
-rem Usage: scripts\rebuild.bat [workspace_dir]   (default: .\_rebuild_ws)
+rem Rebuild the Vitis platform(s) + app(s) from git into a fresh workspace.
+rem Usage: scripts\rebuild.bat [dual^|single^|all] [workspace_dir]
+rem   default setup: dual, default workspace: .\_rebuild_ws
 rem Override the Vitis install with: set XILINX_VITIS=C:\path\to\Vitis
 
 if "%XILINX_VITIS%"=="" set XILINX_VITIS=C:\AMDDesignTools\2025.2.1\Vitis

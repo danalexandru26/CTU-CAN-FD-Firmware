@@ -3,18 +3,20 @@ Recreate and build the Vitis workspace from what is tracked in git.
 
 Run with the Vitis 2025.2 Python CLI (from the repo root):
 
-    vitis -s scripts/rebuild.py                 # builds into ./_rebuild_ws
-    vitis -s scripts/rebuild.py C:/some/new_ws  # builds into a folder you pick
+    vitis -s scripts/rebuild.py                      # dual-node setup into ./_rebuild_ws
+    vitis -s scripts/rebuild.py single               # single-node ILA setup
+    vitis -s scripts/rebuild.py all C:/some/new_ws   # both setups, into a folder you pick
 
-It creates the platform from the committed .xsa, builds it (BSP + FSBL),
-creates the app from the empty_application template, copies in the
-tracked sources from CTU_CAN_FD_ILA_Firmware/src, and builds the .elf.
+For each selected setup it creates the platform from the committed .xsa,
+builds it (BSP + FSBL), creates the app, copies in the tracked sources
+(including CMakeLists.txt with the shared-driver block), and builds the .elf.
+The shared driver/ folder is copied into the workspace first, because the
+apps include it as ../../driver.
 
 The target workspace must not already contain these components, so it
 never touches the workspace you are working in.
 """
 import os
-import re
 import shutil
 import sys
 
@@ -22,86 +24,110 @@ import vitis
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-PLATFORM = "CTU_CAN_FD_ILA"
-APP = "CTU_CAN_FD_ILA_Firmware"
-XSA = os.path.join(REPO, PLATFORM, "hw", "CAN_System_wrapper_ILA.xsa")
 CPU = "ps7_cortexa9_0"
 DOMAIN = "standalone_ps7_cortexa9_0"
-APP_SRC = os.path.join(REPO, APP, "src")
+TEMPLATE = "hello_world"
 
-# Files Vitis generates for the template; everything else in src/ is ours.
+# setup name -> (platform, xsa file in <platform>/hw/, app)
+SETUPS = {
+    "dual": ("CTU_CAN_FD_Double_Node_Wrapper",
+             "CAN_Double_Node_System_wrapper.xsa",
+             "CTU_CAN_FD_DUAL_NODE_FIRMWARE"),
+    "single": ("CTU_CAN_FD_LOOPBACK_2TX_ILA131072",
+               "CAN_System_wrapper.xsa",
+               "CTU_CAN_FD_ILA_Firmware"),
+}
+DEFAULT_SETUP = "dual"
+
+# Files Vitis generates; everything else in src/ is ours.
 SKIP = {"compile_commands.json", ".clangd", ".cache", ".compile_commands"}
-SOURCE_EXT = (".c", ".cpp", ".cc", ".S", ".s")
+
+
+def parse_args(argv):
+    setups, ws = [], None
+    for arg in argv:
+        if arg == "all":
+            setups = list(SETUPS)
+        elif arg in SETUPS:
+            setups.append(arg)
+        elif ws is None:
+            ws = arg
+        else:
+            sys.exit(f"Unexpected argument: {arg}\nUsage: rebuild.py [dual|single|all] [workspace_dir]")
+    setups = setups or [DEFAULT_SETUP]
+    ws = os.path.abspath(ws or os.path.join(REPO, "_rebuild_ws"))
+    return list(dict.fromkeys(setups)), ws
 
 
 def main():
-    ws = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(REPO, "_rebuild_ws"))
-    for name in (PLATFORM, APP):
-        if os.path.exists(os.path.join(ws, name)):
-            sys.exit(f"{ws} already has {name}; pick an empty workspace folder.")
+    setups, ws = parse_args(sys.argv[1:])
+
+    for setup in setups:
+        platform, _, app = SETUPS[setup]
+        for name in (platform, app):
+            if os.path.exists(os.path.join(ws, name)):
+                sys.exit(f"{ws} already has {name}; pick an empty workspace folder.")
     os.makedirs(ws, exist_ok=True)
     print(f"Workspace: {ws}")
+    print(f"Setups:    {', '.join(setups)}")
+
+    # Shared driver, referenced by each app's CMakeLists.txt as ../../driver
+    shutil.copytree(os.path.join(REPO, "driver"), os.path.join(ws, "driver"), dirs_exist_ok=True)
 
     client = vitis.create_client()
+    elfs = []
     try:
         client.set_workspace(path=ws)
-
-        # 1) Platform from the committed .xsa (also creates the zynq_fsbl boot domain)
-        platform = client.create_platform_component(
-            name=PLATFORM,
-            hw_design=XSA,
-            os="standalone",
-            cpu=CPU,
-            domain_name=DOMAIN,
-        )
-        platform.build()
-        xpfm = os.path.join(ws, PLATFORM, "export", PLATFORM, f"{PLATFORM}.xpfm")
-
-        # 2) App from an empty template, then overlay our tracked sources
-        app = client.create_app_component(
-            name=APP,
-            platform=xpfm,
-            domain=DOMAIN,
-            template="empty_application",
-        )
-        app_src = os.path.join(ws, APP, "src")
-        for entry in os.listdir(APP_SRC):
-            if entry in SKIP:
-                continue
-            src = os.path.join(APP_SRC, entry)
-            dst = os.path.join(app_src, entry)
-            if os.path.isdir(src):
-                shutil.copytree(src, dst, dirs_exist_ok=True)
-            else:
-                shutil.copy2(src, dst)
-
-        sync_source_list(app_src)
-        app.build()
-        print(f"\nDone. ELF: {os.path.join(ws, APP, 'build', APP + '.elf')}")
+        for setup in setups:
+            elfs.append(build_setup(client, ws, *SETUPS[setup]))
     finally:
         vitis.dispose()
 
+    print("\nDone.")
+    for elf in elfs:
+        print(f"  ELF: {elf}")
 
-def sync_source_list(app_src):
-    """Point USER_COMPILE_SOURCES at the source files actually present,
-    so a renamed .c file (e.g. helloworld.c -> ILA_Firmware.c) still builds."""
-    cfg = os.path.join(app_src, "UserConfig.cmake")
-    if not os.path.exists(cfg):
-        return
-    files = sorted(f for f in os.listdir(app_src) if f.endswith(SOURCE_EXT))
-    body = "\n".join(f'"{f}"' for f in files)
-    with open(cfg, encoding="utf-8") as fh:
-        text = fh.read()
-    text = re.sub(
-        r"set\(USER_COMPILE_SOURCES\s*\n.*?\n\)",
-        lambda _: f"set(USER_COMPILE_SOURCES\n{body}\n)",
-        text,
-        count=1,
-        flags=re.S,
+
+def build_setup(client, ws, platform_name, xsa_file, app_name):
+    print(f"\n=== {platform_name} + {app_name} ===")
+
+    # 1) Platform from the committed .xsa (also creates the zynq_fsbl boot domain)
+    platform = client.create_platform_component(
+        name=platform_name,
+        hw_design=os.path.join(REPO, platform_name, "hw", xsa_file),
+        os="standalone",
+        cpu=CPU,
+        domain_name=DOMAIN,
     )
-    with open(cfg, "w", encoding="utf-8") as fh:
-        fh.write(text)
-    print("USER_COMPILE_SOURCES:", ", ".join(files))
+    platform.build()
+    xpfm = os.path.join(ws, platform_name, "export", platform_name, f"{platform_name}.xpfm")
+
+    # 2) App from the template, then replace its sources with our tracked ones
+    app = client.create_app_component(
+        name=app_name,
+        platform=xpfm,
+        domain=DOMAIN,
+        template=TEMPLATE,
+    )
+    repo_src = os.path.join(REPO, app_name, "src")
+    app_src = os.path.join(ws, app_name, "src")
+    ours = {e for e in os.listdir(repo_src) if e not in SKIP}
+
+    # Drop template sources we don't ship (e.g. helloworld.c)
+    for entry in os.listdir(app_src):
+        if entry.endswith((".c", ".cpp")) and entry not in ours:
+            os.remove(os.path.join(app_src, entry))
+
+    for entry in ours:
+        src = os.path.join(repo_src, entry)
+        dst = os.path.join(app_src, entry)
+        if os.path.isdir(src):
+            shutil.copytree(src, dst, dirs_exist_ok=True)
+        else:
+            shutil.copy2(src, dst)
+
+    app.build()
+    return os.path.join(ws, app_name, "build", app_name + ".elf")
 
 
 main()
